@@ -10,9 +10,17 @@ ADD HDP-UTILS.repo /etc/yum.repos.d/HDP-UTILS.repo
 
 RUN rpm -iUvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
 # install dev tools
-RUN yum clean all; \
-    rpm --rebuilddb; \
-    yum install -y curl which tar sudo openssh-server openssh-clients rsync
+#RUN yum clean all; \
+#    rpm --rebuilddb; \
+#    yum install -y curl which tar sudo openssh-server openssh-clients rsync
+
+RUN yum clean all \
+    && rpm --rebuilddb \
+    && yum install -y curl which tar sudo openssh-server openssh-clients rsync \
+    && yum clean all \
+    && yum update -y libselinux \
+    && yum clean all
+
 # update libselinux. see https://github.com/sequenceiq/hadoop-docker/issues/14
 RUN yum update -y libselinux
 
@@ -28,17 +36,24 @@ RUN yum install -y hbase tez hadoop snappy snappy-devel hadoop-libhdfs ambari-lo
 RUN yum -y remove java*
 
 # java
-RUN curl -LO 'http://download.oracle.com/otn-pub/java/jdk/7u71-b14/jdk-7u71-linux-x64.rpm' -H 'Cookie: oraclelicense=accept-securebackup-cookie'
-RUN rpm -i jdk-7u71-linux-x64.rpm
-RUN rm jdk-7u71-linux-x64.rpm
+#RUN curl -LO 'http://download.oracle.com/otn-pub/java/jdk/7u71-b14/jdk-7u71-linux-x64.rpm' -H 'Cookie: oraclelicense=accept-securebackup-cookie'
+#RUN rpm -i jdk-7u71-linux-x64.rpm
+#RUN rm jdk-7u71-linux-x64.rpm
 
-ENV JAVA_HOME /usr/java/default
+RUN curl -LO 'http://download.oracle.com/otn-pub/java/jdk/8u131-b11/d54c1d3a095b4ff2b6607d096fa80163/jdk-8u131-linux-x64.rpm' -H 'Cookie: oraclelicense=accept-securebackup-cookie'
+RUN rpm -i jdk-8u131-linux-x64.rpm
+RUN rm jdk-8u131-linux-x64.rpm
+
+#ADD jdk-7u80-linux-x64.rpm /usr/local RUN rpm -i /usr/local/jdk-7u80-linux-x64.rpm RUN rm /usr/local/jdk-7u80-linux-x64.rpm
+
+
+ENV JAVA_HOME /usr/bin/java
 ENV PATH $PATH:$JAVA_HOME/bin
 RUN rm /usr/bin/java && ln -s $JAVA_HOME/bin/java /usr/bin/java
 
-# kylin 1.5.2
-RUN curl -s https://www-us.apache.org/dist/kylin/apache-kylin-1.5.2.1/apache-kylin-1.5.2.1-bin.tar.gz | tar -xz -C /usr/local/
-RUN cd /usr/local && ln -s ./apache-kylin-1.5.2.1-bin kylin
+# kylin 2.3.1
+RUN curl -s https://www-us.apache.org/dist/kylin/apache-kylin-2.3.1/apache-kylin-2.3.1-cdh57-bin.tar.gz | tar -xz -C /usr/local/
+RUN cd /usr/local && ln -s ./apache-kylin-2.3.1-bin kylin
 ENV KYLIN_HOME /usr/local/kylin
 
 # fixing the libhadoop.so like a boss
